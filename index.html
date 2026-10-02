@@ -184,8 +184,8 @@ function fitView(){const d=DV(selDate),pl=d.plan,fd=d.fd||[],isT=selDate===today
  ${wMsg?`<div style="color:var(--rd);margin-top:8px">${esc(wMsg)}</div>`:''}
  ${wBusy?'<div class="mut" style="margin-top:10px">ИИ составляет тренировку…</div>':`<button class="big" onclick="mkPlan(false)">Составить тренировку</button><button class="big" style="background:var(--or)" onclick="mkPlan(true)">✨ Составить с ИИ${PREM()||ADMIN?'':' (Premium)'}</button>`}</div>`;
  return `<h1>🏋️ Тренировка</h1>${calCard()}${dayHead()}${plan}`}
-async function ai(body){try{const {data,error}=await SB.functions.invoke('analyze',{body});
- if(error){let m='Не удалось связаться с ИИ. Проверьте, что функция analyze создана в Supabase';try{const c=error.context;if(c&&c.status===404)m='ИИ ещё не подключён: в Supabase нет функции analyze';else if(c){const j=await c.json();if(j&&j.error)m=j.error}}catch(e){}return{error:m}}
+async function ai(body){try{const {data,error}=await SB.functions.invoke('swift-service',{body});
+ if(error){let m='Не удалось связаться с ИИ. Проверьте, что функция ИИ создана в Supabase';try{const c=error.context;if(c&&c.status===404)m='ИИ ещё не подключён: в Supabase нет функции ИИ';else if(c){const j=await c.json();if(j&&j.error)m=j.error}}catch(e){}return{error:m}}
  return data}catch(e){return{error:'Не удалось связаться с ИИ'}}}
 async function mkPlan(useAi){if(!WG.length){wMsg='Выберите, что тренируем';return render()}
  const g=WG.map(k=>LIB[k][0]).join(' и ');
