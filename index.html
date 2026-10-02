@@ -31,6 +31,11 @@ nav button{flex:1;background:none;color:var(--mut);border-radius:0;font-size:11p
 .seg{display:flex;background:var(--ac2);border-radius:14px;padding:4px}.seg button{flex:1;background:none;color:var(--mut)}.seg button.on{background:var(--ac);color:#fff}
 .sc{overflow-x:auto}
 .col{display:flex;flex-direction:column;gap:6px}
+.chip.sel{background:var(--ac);color:#fff}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}.cal.wd span{text-align:center;color:var(--mut);font-size:12px}
+.cd{background:var(--bg);color:var(--tx);padding:8px 0 4px;border-radius:10px;font-size:14px;font-weight:500}.cd.sel{background:var(--ac);color:#fff}.cd.tod{outline:2px solid var(--or)}
+.dots{display:flex;gap:3px;justify-content:center;height:6px;margin-top:3px}.dots i{width:6px;height:6px;border-radius:50%;display:block}
+.seg.s4 button{padding:10px 2px;font-size:13px}
 </style></head>
 <body><div class="w" id="app"></div><nav id="nav"></nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -42,7 +47,8 @@ let ME=null,ADMIN=false,USERS=[],HI=false,st=null;try{HI=localStorage.getItem('h
 const save=()=>{clearTimeout(st);st=setTimeout(()=>{SB.from('profiles').update({name:ME.name,data:{p:ME.p,weights:ME.weights,days:ME.days}}).eq('id',ME.id).then(()=>{})},600)};
 const today=()=>new Date().toLocaleDateString('sv');
 const U=()=>ME;
-const D=()=>{const u=U();return u.days[today()]||(u.days[today()]={water:0,meals:[],done:[]})};
+const D=(d)=>{const u=U(),k=d||today();return u.days[k]||(u.days[k]={water:0,meals:[],done:[]})};
+const DV=(d)=>U().days[d||today()]||{water:0,meals:[],done:[]};
 let tab='home',place='home',authMode='login',err='';
 const FOODS=[['🥣','Овсянка',150,5,3,27],['🍳','Яйцо',70,6,5,1],['🍞','Хлеб, ломтик',80,3,1,15],['🍗','Курица 100 г',165,31,4,0],['🥗','Салат',90,2,6,7],['🍚','Рис 150 г',195,4,0,43],['🍝','Паста 150 г',220,8,1,43],['🍎','Яблоко',55,0,0,14],['🍌','Банан',95,1,0,23],['🥛','Кефир',100,5,3,8],['🧀','Творог 100 г',120,18,5,3],['🐟','Рыба 100 г',140,20,6,0],['🥔','Картофель 150 г',130,3,0,29],['🍫','Шоколад 20 г',110,1,7,10],['🥑','Авокадо',160,2,15,9],['🥜','Орехи 30 г',190,6,17,4],['🍊','Апельсин',60,1,0,15],['🥦','Овощи 150 г',50,2,0,10],['🍲','Суп 300 мл',150,6,5,18],['🥩','Говядина 100 г',250,26,17,0],['🥞','Блинчик',110,3,4,15],['☕','Кофе с молоком',60,3,3,5]];
 const W={home:[['🤸','Прыжки «звёздочка»','3×30 сек'],['💪','Отжимания','3×10'],['🦵','Приседания','3×15'],['🧎','Выпады','3×10 на ногу'],['🪵','Планка','3×40 сек'],['🌉','Ягодичный мостик','3×15'],['🧘','Растяжка','5 минут'],['🔥','Скручивания на пресс','3×15']],
@@ -97,9 +103,9 @@ const PREM=()=>ME&&ME.until&&new Date(ME.until)>new Date();
 const act=u=>u.plan_until&&new Date(u.plan_until)>new Date();
 function premBtn(u){return act(u)?`<button class="x" onclick="setPrem('${u.id}',0)">Снять ⭐</button>`:`<button class="s" onclick="setPrem('${u.id}',1)">⭐ +30 дней</button>`}
 async function setPrem(id,on){let v=null;if(on){const b=new Date();b.setDate(b.getDate()+30);v=b.toISOString()}await SB.from('profiles').update({plan_until:v}).eq('id',id);loadUsers()}
-function premCard(){const on=PREM()||ADMIN;return `<div class="card" style="border-color:var(--or)"><h2>⭐ Premium — $9 в месяц</h2><div class="mut">Еда по фото: сфотографируйте блюдо, и приложение посчитает калории, белки, жиры и углеводы.</div>${on?`<p><b>Подписка активна${ME.until&&!ADMIN?' до '+new Date(ME.until).toLocaleDateString('ru'):''}</b></p>`:(PAY_URL?`<a href="${PAY_URL}" target="_blank" rel="noopener"><button class="big">Оформить за $9</button></a><div class="mut" style="margin-top:6px">После оплаты подписку включают в течение дня.</div>`:'<div class="mut" style="margin-top:6px">Оплата скоро появится.</div>')}</div>`}
-function mac(){const m=D().meals,q=k=>m.reduce((s,x)=>s+(x[k]||0),0);return{p:q('p'),f:q('f'),c:q('c')}}
-function macroCard(){const c=calc(U()),m=mac(),r=(n,v,g,col)=>`<div style="margin:8px 0"><div class="row sp"><span>${n}</span><span class="mut">${v} / ${g} г</span></div><div class="bar"><i style="width:${Math.min(100,v/g*100)}%;background:${col}"></i></div></div>`;
+function premCard(){const on=PREM()||ADMIN;return `<div class="card" style="border-color:var(--or)"><h2>⭐ Premium — $9 в месяц</h2><div class="mut">Еда по фото: сфотографируйте блюдо, и приложение посчитает калории, белки, жиры и углеводы. А ещё тренировки, которые ИИ составляет под вашу цель.</div>${on?`<p><b>Подписка активна${ME.until&&!ADMIN?' до '+new Date(ME.until).toLocaleDateString('ru'):''}</b></p>`:(PAY_URL?`<a href="${PAY_URL}" target="_blank" rel="noopener"><button class="big">Оформить за $9</button></a><div class="mut" style="margin-top:6px">После оплаты подписку включают в течение дня.</div>`:'<div class="mut" style="margin-top:6px">Оплата скоро появится.</div>')}</div>`}
+function mac(dt){const m=DV(dt).meals,q=k=>m.reduce((s,x)=>s+(x[k]||0),0);return{p:q('p'),f:q('f'),c:q('c')}}
+function macroCard(dt){const c=calc(U()),m=mac(dt),r=(n,v,g,col)=>`<div style="margin:8px 0"><div class="row sp"><span>${n}</span><span class="mut">${v} / ${g} г</span></div><div class="bar"><i style="width:${Math.min(100,v/g*100)}%;background:${col}"></i></div></div>`;
  return `<div class="card"><h2>Белки, жиры, углеводы</h2>${r('🥩 Белки',m.p,c.prot,'var(--rd)')}${r('🥑 Жиры',m.f,c.fat,'var(--or)')}${r('🍚 Углеводы',m.c,c.carb,'var(--bl)')}</div>`}
 let stepOn=false,lastT=0,rt=null;const STEPG=8000;
 function stepCard(){const hv=ME.hs&&ME.hs[today()],s=hv!=null?hv:(D().steps||0);return `<div class="card"><div class="row sp"><h2>👟 Шаги</h2><span class="mut">${s} / ${STEPG}</span></div><div class="bar"><i style="width:${Math.min(100,s/STEPG*100)}%;background:var(--ac)"></i></div><div class="row" style="margin-top:10px"><input id="sv" type="number" placeholder="Шагов за день"><button onclick="setSteps()">Записать</button></div><button class="s big" onclick="stepStart()">${stepOn?'✓ Автосчёт включён':'Считать шаги автоматически'}</button><div class="mut" style="margin-top:6px">Автосчёт работает, пока приложение открыто. ${ME.hs&&ME.hs[today()]!=null?'Сейчас показаны шаги из «Здоровья».':'Точное число можно записать вручную или подключить «Здоровье» в «Кабинете».'}</div></div>`}
@@ -113,10 +119,10 @@ function camCard(){if(!(PREM()||ADMIN))return `<div class="card"><h2>📷 Еда
 function snap(inp){const f=inp.files[0];if(!f)return;snapBusy=true;snapMsg='';SNAP=null;render();
  const img=new Image();img.onerror=()=>{snapBusy=false;snapMsg='Не удалось открыть фото';render()};
  img.onload=async()=>{try{const s=Math.min(1,800/Math.max(img.width,img.height)),cv=document.createElement('canvas');cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
- const {data,error}=await SB.functions.invoke('analyze',{body:{image:cv.toDataURL('image/jpeg',0.7).split(',')[1]}});
- if(error||!data||data.error)snapMsg=(data&&data.error)||'Не удалось распознать, попробуйте ещё раз';else SNAP=data}catch(e){snapMsg='Не удалось распознать, попробуйте ещё раз'}
+ const data=await ai({type:'photo',image:cv.toDataURL('image/jpeg',0.7).split(',')[1]});
+ if(!data||data.error)snapMsg=(data&&data.error)||'Не удалось распознать, попробуйте ещё раз';else SNAP=data}catch(e){snapMsg='Не удалось распознать, попробуйте ещё раз'}
  snapBusy=false;render()};img.src=URL.createObjectURL(f)}
-function addSnap(){const k=+document.getElementById('sk').value;if(!(k>0))return;const q=k/(+SNAP.kcal||k),r=v=>Math.round((+v||0)*q);D().meals.push({t:document.getElementById('mt').value,e:'📷',n:SNAP.name,k:Math.round(k),p:r(SNAP.p),f:r(SNAP.f),c:r(SNAP.c)});SNAP=null;save();render()}
+function addSnap(){const k=+document.getElementById('sk').value;if(!(k>0))return;const q=k/(+SNAP.kcal||k),r=v=>Math.round((+v||0)*q);D(selDate).meals.push({t:MT,e:'📷',n:SNAP.name,k:Math.round(k),p:r(SNAP.p),f:r(SNAP.f),c:r(SNAP.c)});SNAP=null;save();render()}
 function cp(t){try{navigator.clipboard.writeText(t)}catch(e){}}
 function syncCard(){const u=CFG.url+'/functions/v1/steps',k=esc(ME.key||'');return `<div class="card"><h2>🔄 Шаги из «Здоровья» (iPhone)</h2><div class="mut">Адрес и ключ нужны для команды в приложении «Быстрые команды». Ключ никому не показывайте.</div><label>Адрес</label><input readonly value="${u}"><label>Ваш ключ</label><input readonly value="${k}"><div class="row" style="margin-top:8px"><button class="s" onclick="cp('${u}')">Копировать адрес</button><button class="s" onclick="cp('${k}')">Копировать ключ</button></div></div>`}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ME)SB.from('profiles').select('hsteps').eq('id',ME.id).single().then(({data:d})=>{if(d){ME.hs=d.hsteps||{};if(tab==='home')render()}})});
@@ -126,25 +132,41 @@ function installCard(force){if(HI&&!force)return '';
  const st=ios?['Откройте ссылку в <b>Safari</b>','Нажмите кнопку «Поделиться» ⬆️ внизу','Выберите «На экран “Домой”»','Нажмите «Добавить»']:['Откройте ссылку в <b>Chrome</b>','Нажмите три точки ⋮ вверху справа','Выберите «Установить приложение» или «Добавить на главный экран»','Нажмите «Добавить»'];
  return `<div class="card" style="border-color:var(--ac)"><h2>📲 Иконка на телефон</h2><ol style="padding-left:20px;margin:0 0 8px">${st.map(x=>`<li>${x}</li>`).join('')}</ol><div class="mut">Откроется как обычное приложение, без адресной строки. Виджет на экран блокировки такая страница сделать не может.</div>${force?'':'<button class="s big" onclick="hideInst()">Понятно, скрыть</button>'}</div>`}
 function homeView(){const u=U(),c=calc(u),d=D(),e=eaten(),pr=Math.min(1,e/c.kcal),L=2*Math.PI*52;
- const total=W[place].length,done=d.done.filter(k=>k.startsWith(place)).length;
+ const pl=d.plan,total=pl?pl.ex.length:0,done=pl?(d.fd||[]).length:0;
  return `<h1>Привет, ${esc(u.name)}! 👋</h1><div class="mut">Сегодня ${new Date().toLocaleDateString('ru',{day:'numeric',month:'long'})}</div>
  <div class="hero row sp"><svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="12"/><circle cx="60" cy="60" r="52" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-dasharray="${pr*L} ${L}" transform="rotate(-90 60 60)"/><text x="60" y="58" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">${e}</text><text x="60" y="76" text-anchor="middle" fill="#fff" font-size="11">из ${c.kcal} ккал</text></svg>
  <div style="flex:1"><div>Осталось</div><div style="font-size:28px;font-weight:700">${Math.max(0,c.kcal-e)} ккал</div></div></div>
  <div class="card"><div class="row sp"><h2>💧 Вода</h2><span class="mut">${d.water} / ${c.water} мл</span></div><div class="bar"><i style="width:${Math.min(100,d.water/c.water*100)}%;background:var(--bl)"></i></div></div>
- <div class="card"><div class="row sp"><h2>🏋️ Тренировка</h2><span class="mut">${done} из ${total}</span></div><div class="bar"><i style="width:${done/total*100}%;background:var(--or)"></i></div></div>
+ <div class="card"><div class="row sp"><h2>🏋️ Тренировка</h2><span class="mut">${pl?done+' из '+total:'не выбрана'}</span></div><div class="bar"><i style="width:${total?done/total*100:0}%;background:var(--or)"></i></div></div>
  ${macroCard()}${stepCard()}<div class="card"><div class="row sp"><span>Ваш вес</span><b>${u.p.w} кг</b></div></div>${installCard()}`}
 
-function foodView(){const d=D(),c=calc(U());
- return `<h1>🍽️ Питание</h1><div class="mut">Норма: ${c.kcal} ккал в день</div>${macroCard()}${camCard()}
- <div class="card"><label>Приём пищи</label><select id="mt">${MEALS.map(m=>`<option>${m}</option>`).join('')}</select>
- <label>Нажмите на продукт, чтобы добавить</label><div class="chips">${FOODS.map((f,i)=>`<button class="chip" onclick="addFood(${i})">${f[0]} ${f[1]} <b>${f[2]}</b></button>`).join('')}</div>
+const MI={'Завтрак':'🌅','Обед':'☀️','Ужин':'🌙','Перекус':'🍎'};
+let MT='Завтрак',selDate=today(),calM=new Date(),WP='home',WG=[],wBusy=false,wMsg='';
+const LIB={legs:['Ноги','🦵',{home:[['🦵','Приседания','4×15'],['🧎','Выпады','3×12 на ногу'],['🌉','Ягодичный мостик','3×15'],['🧱','Приседание у стены','3×40 сек']],gym:[['🦿','Жим ногами','4×12'],['🏋️','Приседания со штангой','4×8'],['🦵','Разгибание ног','3×12'],['🧎','Выпады с гантелями','3×10']]}],
+arms:['Руки','💪',{home:[['💪','Отжимания узким хватом','3×10'],['🪑','Обратные отжимания от стула','3×12'],['💪','Подъём рук с бутылками','3×15'],['🤸','Планка с касанием плеч','3×12']],gym:[['💪','Сгибание рук с гантелями','3×12'],['🏋️','Французский жим','3×10'],['🚣','Тяга блока к лицу','3×12'],['💪','Молотки','3×12']]}],
+chest:['Грудь и спина','🏋️',{home:[['💪','Отжимания','4×10'],['🦸','Супермен','3×15'],['💪','Отжимания с широкой постановкой','3×8'],['🚣','Тяга рюкзака в наклоне','3×12']],gym:[['🏋️','Жим лёжа','4×8'],['🚣','Тяга верхнего блока','4×12'],['🏋️','Жим гантелей на наклонной','3×10'],['🚣','Тяга штанги в наклоне','3×10']]}],
+abs:['Пресс','🔥',{home:[['🔥','Скручивания','3×20'],['🪵','Планка','3×45 сек'],['🚴','Велосипед лёжа','3×20'],['🦵','Подъём ног лёжа','3×12']],gym:[['🔥','Скручивания на блоке','3×15'],['🦵','Подъём ног в упоре','3×12'],['🪵','Планка с отягощением','3×40 сек'],['🌀','Русский твист','3×20']]}],
+all:['Всё тело','⚡',{home:[['🤸','Прыжки «звёздочка»','3×30 сек'],['🦵','Приседания','3×15'],['💪','Отжимания','3×10'],['🪵','Планка','3×40 сек']],gym:[['🏃','Беговая дорожка','10 минут'],['🏋️','Становая тяга','3×8'],['🏋️','Жим гантелей сидя','3×10'],['🚣','Тяга верхнего блока','3×12']]}]};
+const dkey=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+function calCard(){const y=calM.getFullYear(),m=calM.getMonth(),off=(new Date(y,m,1).getDay()+6)%7,n=new Date(y,m+1,0).getDate(),days=U().days,t=today();
+ let cells='';for(let i=0;i<off;i++)cells+='<div></div>';
+ for(let d=1;d<=n;d++){const k=dkey(y,m,d),x=days[k]||{},eat=(x.meals||[]).length>0,wk=!!x.plan,all=wk&&(x.fd||[]).length===x.plan.ex.length;
+  cells+=`<button class="cd ${k===selDate?'sel':''} ${k===t?'tod':''}" onclick="selDate='${k}';render()">${d}<span class="dots">${eat?'<i style="background:#22c55e"></i>':''}${wk?`<i style="background:${all?'var(--or)':'#9aa8a1'}"></i>`:''}</span></button>`}
+ const nm=calM.toLocaleDateString('ru',{month:'long',year:'numeric'});
+ return `<div class="card"><div class="row sp"><button class="s" onclick="calM=new Date(${y},${m-1},1);render()">‹</button><b style="text-transform:capitalize">${nm}</b><button class="s" onclick="calM=new Date(${y},${m+1},1);render()">›</button></div><div class="cal wd">${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<span>${x}</span>`).join('')}</div><div class="cal">${cells}</div><div class="mut" style="margin-top:8px">🟢 еда записана · ⚪ тренировка выбрана · 🟠 тренировка выполнена</div></div>`}
+function dayHead(){const dt=new Date(selDate+'T12:00:00'),isT=selDate===today();return `<div class="row sp" style="margin:6px 0"><b>📅 ${dt.toLocaleDateString('ru',{weekday:'long',day:'numeric',month:'long'})}${isT?' (сегодня)':''}</b>${isT?'':'<button class="s" onclick="selDate=today();calM=new Date();render()">К сегодня</button>'}</div>`}
+function normCard(){const c=calc(U());return `<div class="card"><h2>🎯 Ваша норма на день</h2><div class="chips"><div class="chip">🔥 <b>${c.kcal}</b> ккал</div><div class="chip">🥩 Б <b>${c.prot}</b> г</div><div class="chip">🥑 Ж <b>${c.fat}</b> г</div><div class="chip">🍚 У <b>${c.carb}</b> г</div><div class="chip">💧 <b>${c.water}</b> мл</div><div class="chip">👟 <b>${STEPG}</b> шагов</div></div><div class="mut" style="margin-top:6px">Считается по вашему полу, возрасту, росту, весу и цели. Параметры меняются в «Кабинете».</div></div>`}
+function foodView(){const d=DV(selDate),e=d.meals.reduce((s,x)=>s+x.k,0);
+ return `<h1>🍽️ Питание</h1>${normCard()}${calCard()}${dayHead()}${macroCard(selDate)}
+ <div class="card"><label>Приём пищи</label><div class="seg s4">${MEALS.map(m=>`<button class="${MT===m?'on':''}" onclick="MT='${m}';render()">${MI[m]} ${m}</button>`).join('')}</div>
+ <label>Нажмите на продукт, чтобы добавить в «${MT}»</label><div class="chips">${FOODS.map((f,i)=>`<button class="chip" onclick="addFood(${i})">${f[0]} ${f[1]} <b>${f[2]}</b></button>`).join('')}</div>
  <label>Или своё блюдо</label><div class="row"><input id="cn" placeholder="Название"><input id="ck" type="number" placeholder="ккал" style="width:100px"></div>
  <button class="s big" onclick="addCustom()">Добавить своё</button></div>
- <div class="card"><h2>Сегодня съедено: ${eaten()} ккал</h2>${d.meals.length?MEALS.map(m=>{const l=d.meals.map((x,i)=>[x,i]).filter(x=>x[0].t===m);return l.length?`<div class="mut" style="margin-top:8px">${m}</div>`+l.map(([x,i])=>`<div class="row sp"><span>${esc(x.e)} ${esc(x.n)}</span><span>${x.k} <button class="x" onclick="delFood(${i})">✕</button></span></div>`).join(''):''}).join(''):'<div class="mut">Пока ничего не добавлено</div>'}</div>`}
-function addFood(i){const f=FOODS[i];D().meals.push({t:document.getElementById('mt').value,e:f[0],n:f[1],k:f[2],p:f[3],f:f[4],c:f[5]});save();render()}
-function addCustom(){const n=document.getElementById('cn').value.trim(),k=+document.getElementById('ck').value;if(!n||!(k>0))return;D().meals.push({t:document.getElementById('mt').value,e:'🍽️',n,k:Math.round(k)});save();render()}
-function delFood(i){D().meals.splice(i,1);save();render()}
-
+ ${camCard()}
+ <div class="card"><h2>Съедено: ${e} ккал</h2>${d.meals.length?MEALS.map(m=>{const l=d.meals.map((x,i)=>[x,i]).filter(x=>x[0].t===m);return l.length?`<div class="mut" style="margin-top:8px">${MI[m]} ${m}</div>`+l.map(([x,i])=>`<div class="row sp"><span>${esc(x.e)} ${esc(x.n)}</span><span>${x.k} <button class="x" onclick="delFood(${i})">✕</button></span></div>`).join(''):''}).join(''):'<div class="mut">В этот день ничего не записано</div>'}</div>`}
+function addFood(i){const f=FOODS[i];D(selDate).meals.push({t:MT,e:f[0],n:f[1],k:f[2],p:f[3],f:f[4],c:f[5]});save();render()}
+function addCustom(){const n=document.getElementById('cn').value.trim(),k=+document.getElementById('ck').value;if(!n||!(k>0))return;D(selDate).meals.push({t:MT,e:'🍽️',n,k:Math.round(k)});save();render()}
+function delFood(i){D(selDate).meals.splice(i,1);save();render()}
 function waterView(){const d=D(),c=calc(U()),p=Math.min(1,d.water/c.water),y=170-p*140;
  return `<h1>💧 Вода</h1><div class="mut">Ваша норма: ${c.water} мл в день</div>
  <div class="card" style="text-align:center"><svg width="160" height="200" viewBox="0 0 160 200"><defs><clipPath id="gl"><path d="M30 20 H130 L118 175 Q117 185 107 185 H53 Q43 185 42 175 Z"/></clipPath></defs><g clip-path="url(#gl)"><rect x="0" y="${y+10}" width="160" height="200" fill="#3b82f6" opacity=".85"/><path d="M0 ${y+10} Q20 ${y} 40 ${y+10} T80 ${y+10} T120 ${y+10} T160 ${y+10} V${y+25} H0Z" fill="#60a5fa"/></g><path d="M30 20 H130 L118 175 Q117 185 107 185 H53 Q43 185 42 175 Z" fill="none" stroke="#3b82f6" stroke-width="4"/></svg>
@@ -152,13 +174,31 @@ function waterView(){const d=D(),c=calc(U()),p=Math.min(1,d.water/c.water),y=170
  <div class="g" style="margin-top:12px"><button onclick="addW(250)">🥛 +250</button><button onclick="addW(500)">🍶 +500</button></div><button class="s big" onclick="addW(-250)">Убрать 250 мл</button></div>`}
 function addW(v){const d=D();d.water=Math.max(0,d.water+v);save();render()}
 
-function fitView(){const d=D(),l=W[place],done=d.done.filter(k=>k.startsWith(place)).length;
- return `<h1>🏋️ Тренировка</h1><div class="seg" style="margin:10px 0"><button class="${place==='home'?'on':''}" onclick="place='home';render()">🏠 Дома</button><button class="${place==='gym'?'on':''}" onclick="place='gym';render()">🏢 В зале</button></div>
- <div class="card"><div class="row sp"><h2>Программа на сегодня</h2><span class="mut">${done}/${l.length}</span></div><div class="bar"><i style="width:${done/l.length*100}%;background:var(--or)"></i></div>
- ${l.map((x,i)=>{const k=place+i,on=d.done.includes(k);return `<div class="ex ${on?'done':''}"><div class="ico">${x[0]}</div><div style="flex:1"><div class="t"><b>${x[1]}</b></div><div class="mut">${x[2]}</div></div><button class="${on?'':'s'}" onclick="tg('${k}')">${on?'✓':'Готово'}</button></div>`}).join('')}
- ${done===l.length?'<div style="text-align:center;margin-top:12px;font-size:18px">🎉 Тренировка выполнена!</div>':''}</div>`}
-function tg(k){const d=D(),i=d.done.indexOf(k);i<0?d.done.push(k):d.done.splice(i,1);save();render()}
-
+function fitView(){const d=DV(selDate),pl=d.plan,fd=d.fd||[],isT=selDate===today();
+ const plan=pl?`<div class="card"><div class="row sp"><h2>${esc(pl.title||'Тренировка')}</h2><span class="mut">${fd.length}/${pl.ex.length}</span></div><div class="mut">${pl.place==='gym'?'🏢 В зале':'🏠 Дома'}${pl.ai?' · ✨ составлено ИИ':''}</div><div class="bar" style="margin:8px 0"><i style="width:${fd.length/pl.ex.length*100}%;background:var(--or)"></i></div>
+ ${pl.ex.map((x,i)=>{const on=fd.includes(i);return `<div class="ex ${on?'done':''}"><div class="ico">${esc(x[0])}</div><div style="flex:1"><div class="t"><b>${esc(x[1])}</b></div><div class="mut">${esc(x[2])}</div></div><button class="${on?'':'s'}" onclick="tg(${i})">${on?'✓':'Готово'}</button></div>`}).join('')}
+ ${fd.length===pl.ex.length?'<div style="text-align:center;margin-top:12px;font-size:18px">🎉 Тренировка выполнена!</div>':''}
+ <button class="s big" onclick="resetPlan()">Выбрать другую тренировку</button></div>`
+ :`<div class="card"><h2>Что тренируем ${isT?'сегодня':'в этот день'}?</h2><div class="seg" style="margin:8px 0"><button class="${WP==='home'?'on':''}" onclick="WP='home';render()">🏠 Дома</button><button class="${WP==='gym'?'on':''}" onclick="WP='gym';render()">🏢 В зале</button></div>
+ <div class="chips">${Object.entries(LIB).map(([k,v])=>`<button class="chip ${WG.includes(k)?'sel':''}" onclick="togG('${k}')">${v[1]} ${v[0]}</button>`).join('')}</div><div class="mut" style="margin-top:6px">Можно выбрать несколько.</div>
+ ${wMsg?`<div style="color:var(--rd);margin-top:8px">${esc(wMsg)}</div>`:''}
+ ${wBusy?'<div class="mut" style="margin-top:10px">ИИ составляет тренировку…</div>':`<button class="big" onclick="mkPlan(false)">Составить тренировку</button><button class="big" style="background:var(--or)" onclick="mkPlan(true)">✨ Составить с ИИ${PREM()||ADMIN?'':' (Premium)'}</button>`}</div>`;
+ return `<h1>🏋️ Тренировка</h1>${calCard()}${dayHead()}${plan}`}
+async function ai(body){try{const {data,error}=await SB.functions.invoke('analyze',{body});
+ if(error){let m='Не удалось связаться с ИИ. Проверьте, что функция analyze создана в Supabase';try{const c=error.context;if(c&&c.status===404)m='ИИ ещё не подключён: в Supabase нет функции analyze';else if(c){const j=await c.json();if(j&&j.error)m=j.error}}catch(e){}return{error:m}}
+ return data}catch(e){return{error:'Не удалось связаться с ИИ'}}}
+async function mkPlan(useAi){if(!WG.length){wMsg='Выберите, что тренируем';return render()}
+ const g=WG.map(k=>LIB[k][0]).join(' и ');
+ if(!useAi){return setPlan({title:g,place:WP,groups:WG,ex:WG.flatMap(k=>LIB[k][2][WP]).slice(0,10),ai:false})}
+ if(!(PREM()||ADMIN)){wMsg='ИИ-тренировки доступны в Premium. Обычную тренировку можно составить бесплатно.';return render()}
+ wBusy=true;wMsg='';render();
+ const r=await ai({type:'workout',place:WP,groups:g,goal:U().p.goal,sex:U().p.sex,age:U().p.a});wBusy=false;
+ if(!r||r.error||!Array.isArray(r.ex)||!r.ex.length){wMsg=(r&&r.error)||'ИИ не смог составить тренировку';return render()}
+ setPlan({title:r.title||g,place:WP,groups:WG,ex:r.ex.slice(0,10).map(x=>[String(x.e||'💪'),String(x.n||'Упражнение'),String(x.s||'3×12')]),ai:true})}
+function setPlan(p){const d=D(selDate);d.plan=p;d.fd=[];wMsg='';save();render()}
+function togG(k){const i=WG.indexOf(k);i<0?WG.push(k):WG.splice(i,1);render()}
+function tg(i){const d=D(selDate);d.fd=d.fd||[];const j=d.fd.indexOf(i);j<0?d.fd.push(i):d.fd.splice(j,1);save();render()}
+function resetPlan(){const d=D(selDate);delete d.plan;d.fd=[];save();render()}
 function meView(){const u=U(),c=calc(u),p=u.p,ws=u.weights.slice(-10);
  let ch='';if(ws.length>1){const mn=Math.min(...ws.map(x=>x.w))-1,mx=Math.max(...ws.map(x=>x.w))+1,pts=ws.map((x,i)=>`${10+i*(280/(ws.length-1))},${100-(x.w-mn)/(mx-mn)*90}`).join(' ');ch=`<svg viewBox="0 0 300 110" width="100%"><polyline points="${pts}" fill="none" stroke="var(--ac)" stroke-width="3"/>${pts.split(' ').map(q=>`<circle cx="${q.split(',')[0]}" cy="${q.split(',')[1]}" r="4" fill="var(--ac)"/>`).join('')}</svg>`}
  return `<h1>👤 ${esc(u.name)}</h1><div class="mut">Личный кабинет</div>
@@ -167,7 +207,7 @@ function meView(){const u=U(),c=calc(u),p=u.p,ws=u.weights.slice(-10);
  <button class="s big" onclick="saveP()">Сохранить</button></div>
  <div class="card"><h2>Вес</h2><div class="row"><input id="nw" type="number" step="0.1" value="${p.w}"><button onclick="addWt()">Записать</button></div><div class="sc">${ch}</div>
  <div class="mut">${u.weights.slice(-4).reverse().map(x=>x.d.slice(5)+': '+x.w+' кг').join(' · ')}</div></div>
- <div class="card"><h2>Ваши нормы</h2><div class="g"><div class="chip">🔥 <b>${c.kcal}</b> ккал</div><div class="chip">💧 <b>${c.water}</b> мл воды</div></div>
+ <div class="card"><h2>Ваши нормы</h2><div class="chips"><div class="chip">🔥 <b>${c.kcal}</b> ккал</div><div class="chip">🥩 Б <b>${c.prot}</b></div><div class="chip">🥑 Ж <b>${c.fat}</b></div><div class="chip">🍚 У <b>${c.carb}</b></div><div class="chip">💧 <b>${c.water}</b> мл</div><div class="chip">👟 <b>${STEPG}</b></div></div>
  <p class="mut">Индекс массы тела: <b>${c.bmi.toFixed(1)}</b> — ${bmiText(c.bmi)}. Это примерный расчёт, не замена врачу.</p></div>
  ${syncCard()}${premCard()}${installCard(true)}<button class="s big" onclick="logout()">Выйти</button>`}
 function saveP(){const p=U().p,h=+document.getElementById('eh').value,a=+document.getElementById('ea').value;if(h>100&&h<230)p.h=h;if(a>5&&a<110)p.a=a;p.goal=document.getElementById('eg').value;save();render()}
